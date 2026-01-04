@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+
+const articles = (await getCollection('articles')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// Group by date
+const articlesByDate = articles.reduce((acc, article) => {
+  const dateKey = article.data.pubDate.toLocaleDateString('pt-BR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  if (!acc[dateKey]) acc[dateKey] = [];
+  acc[dateKey].push(article);
+  return acc;
+}, {} as Record<string, typeof articles>);
+---
+
+<BaseLayout title="Artigos" description="Todos os artigos, papers e análises traduzidos e explicados em português.">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="mb-10">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        Artigos
+      </h1>
+      <p class="text-xl text-gray-600">
+        Notícias, papers e análises sobre IA — traduzidos e explicados em português.
+      </p>
+    </header>
+
+    <!-- Filter tabs -->
+    <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+      <button class="px-4 py-2 bg-dark text-white rounded-full text-sm font-medium">
+        Todos
+      </button>
+      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition">
+        Notícias
+      </button>
+      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition">
+        Papers
+      </button>
+      <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition">
+        Repositórios
+      </button>
+    </div>
+
+    <!-- Articles by date -->
+    {articles.length === 0 ? (
+      <div class="text-center py-12 bg-gray-50 rounded-xl">
+        <p class="text-gray-500 text-lg">Nenhum artigo publicado ainda.</p>
+        <p class="text-gray-400 mt-2">Os primeiros artigos serão publicados em breve!</p>
+      </div>
+    ) : (
+      Object.entries(articlesByDate).map(([date, dateArticles]) => (
+        <section class="mb-10">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 flex items-center gap-2">
+            <span class="w-8 h-px bg-gray-300"></span>
+            {date}
+          </h2>
+          <div class="grid gap-4">
+            {dateArticles.map((article) => (
+              <ArticleCard article={article} />
+            ))}
+          </div>
+        </section>
+      ))
+    )}
+  </div>
+</BaseLayout>

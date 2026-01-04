@@ -1,0 +1,66 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description = 'Sua dose diária de inteligência artificial, curada e traduzida para português.', image } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO -->
+    <title>{title} | AI Digest</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} | AI Digest`} />
+    <meta property="og:description" content={description} />
+    {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} | AI Digest`} />
+    <meta name="twitter:description" content={description} />
+    {image && <meta name="twitter:image" content={new URL(image, Astro.site)} />}
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-dark to-darker text-white">
+      <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2 text-xl font-bold hover:opacity-90 transition">
+          <span class="text-2xl">🤖</span>
+          <span>AI Digest</span>
+        </a>
+        <div class="flex gap-6 text-sm">
+          <a href="/artigos" class="hover:text-primary transition">Artigos</a>
+          <a href="/#newsletter" class="hover:text-primary transition">Newsletter</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="bg-gray-100 border-t mt-12">
+      <div class="max-w-4xl mx-auto px-4 py-8 text-center text-gray-600 text-sm">
+        <p class="mb-2">
+          <span class="text-xl">🤖</span> AI Digest &copy; {new Date().getFullYear()}
+        </p>
+        <p>Sua dose diária de inteligência artificial, curada e traduzida.</p>
+      </div>
+    </footer>
+  </body>
+</html>
