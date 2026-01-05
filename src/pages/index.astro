@@ -9,26 +9,72 @@ const latestArticles = (await getCollection('articles'))
 ---
 
 <BaseLayout title="Sua dose diária de IA">
-  <!-- Hero -->
-  <section class="bg-gradient-to-br from-dark via-darker to-dark text-white py-16 md:py-24">
+  <!-- Hero com formulário inline (above the fold) -->
+  <section class="bg-gradient-to-br from-dark via-darker to-dark text-white py-12 md:py-20">
     <div class="max-w-4xl mx-auto px-4 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold mb-6">
+      <div class="mb-4">
+        <span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-medium">
+          +500 profissionais de tech já assinam
+        </span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
         Sua dose diária de <span class="text-primary">inteligência artificial</span>
       </h1>
       <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
         Notícias, papers e ferramentas de IA — curados, traduzidos e explicados em português.
         Direto no seu email, todo dia às 7h.
       </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="#newsletter" class="bg-primary hover:bg-purple-600 text-white font-semibold px-8 py-4 rounded-lg transition text-lg">
-          Assinar Grátis
-        </a>
-        <a href="/artigos" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-lg transition text-lg">
-          Ver Artigos
-        </a>
-      </div>
+
+      <!-- Formulário no Hero (above the fold) -->
+      <form id="hero-form" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-6">
+        <input
+          type="email"
+          name="email"
+          placeholder="seu@email.com"
+          required
+          class="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary outline-none"
+        />
+        <button
+          type="submit"
+          class="bg-primary hover:bg-purple-600 text-white font-semibold px-6 py-3 rounded-lg transition whitespace-nowrap"
+        >
+          Assinar Gratis
+        </button>
+      </form>
+      <p class="text-gray-400 text-sm">Gratis. Sem spam. Cancele quando quiser.</p>
     </div>
   </section>
+
+  <!-- Exit Intent Popup -->
+  <div id="exit-popup" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-8 relative animate-bounce-in">
+      <button id="close-popup" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      <div class="text-center">
+        <div class="text-5xl mb-4">🤖</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">Espera!</h3>
+        <p class="text-gray-600 mb-6">
+          Receba as principais novidades de IA todo dia no seu email.
+          <strong>Gratis e sem spam.</strong>
+        </p>
+        <form id="popup-form" class="space-y-3">
+          <input
+            type="email"
+            name="email"
+            placeholder="seu@email.com"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+          />
+          <button
+            type="submit"
+            class="w-full bg-primary hover:bg-purple-600 text-white font-semibold px-6 py-3 rounded-lg transition"
+          >
+            Quero Receber!
+          </button>
+        </form>
+        <p class="text-xs text-gray-400 mt-4">Junte-se a +500 profissionais de tech</p>
+      </div>
+    </div>
+  </div>
 
   <!-- Latest Articles -->
   <section class="max-w-4xl mx-auto px-4 py-16">
@@ -118,12 +164,20 @@ const latestArticles = (await getCollection('articles'))
   </section>
 </BaseLayout>
 
-<script>
-  const form = document.getElementById('newsletter-form');
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = new FormData(form as HTMLFormElement).get('email');
+<style>
+  @keyframes bounce-in {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-bounce-in {
+    animation: bounce-in 0.3s ease-out;
+  }
+</style>
 
+<script>
+  // Função de subscribe reutilizável
+  async function subscribeEmail(email: string, source: string): Promise<boolean> {
     try {
       const res = await fetch('https://yvhtpboejndktqoxbnbn.supabase.co/rest/v1/ai_digest_subscribers', {
         method: 'POST',
@@ -131,7 +185,7 @@ const latestArticles = (await getCollection('articles'))
           'Content-Type': 'application/json',
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2aHRwYm9lam5ka3Rxb3hibmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzYyMDMsImV4cCI6MjA3ODgxMjIwM30.M6PxISn2BjdJRRcsJoRQBVcVL4kjTGuQN53c98BbqSc',
         },
-        body: JSON.stringify({ email, source: 'landing_page' }),
+        body: JSON.stringify({ email, source }),
       });
 
       if (res.ok) {
@@ -139,13 +193,83 @@ const latestArticles = (await getCollection('articles'))
         if (typeof fbq !== 'undefined') {
           fbq('track', 'Lead', { content_name: 'AI Digest Newsletter' });
         }
-        alert('Inscrição confirmada! Bem-vindo ao AI Digest 🎉');
-        (form as HTMLFormElement).reset();
-      } else {
-        throw new Error('Erro ao inscrever');
+        // Marcar como inscrito no localStorage
+        localStorage.setItem('ai_digest_subscribed', 'true');
+        return true;
       }
-    } catch (err) {
-      alert('Erro ao inscrever. Tente novamente.');
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  // Handler genérico para formulários
+  function setupForm(formId: string, source: string) {
+    const form = document.getElementById(formId);
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = new FormData(form as HTMLFormElement).get('email') as string;
+      const button = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const originalText = button.textContent;
+
+      button.textContent = 'Enviando...';
+      button.disabled = true;
+
+      const success = await subscribeEmail(email, source);
+
+      if (success) {
+        alert('Inscricao confirmada! Bem-vindo ao AI Digest');
+        (form as HTMLFormElement).reset();
+        // Fechar popup se estiver aberto
+        const popup = document.getElementById('exit-popup');
+        if (popup) popup.classList.add('hidden');
+        popup?.classList.remove('flex');
+      } else {
+        alert('Erro ao inscrever. Tente novamente.');
+      }
+
+      button.textContent = originalText;
+      button.disabled = false;
+    });
+  }
+
+  // Setup de todos os formulários
+  setupForm('hero-form', 'hero_form');
+  setupForm('newsletter-form', 'landing_page');
+  setupForm('popup-form', 'exit_popup');
+
+  // Exit Intent Popup
+  const popup = document.getElementById('exit-popup');
+  const closeBtn = document.getElementById('close-popup');
+  let popupShown = false;
+
+  // Mostrar popup quando mouse sai da página (desktop)
+  document.addEventListener('mouseout', (e) => {
+    if (
+      !popupShown &&
+      !localStorage.getItem('ai_digest_subscribed') &&
+      !localStorage.getItem('ai_digest_popup_closed') &&
+      e.clientY < 10
+    ) {
+      popup?.classList.remove('hidden');
+      popup?.classList.add('flex');
+      popupShown = true;
+    }
+  });
+
+  // Fechar popup
+  closeBtn?.addEventListener('click', () => {
+    popup?.classList.add('hidden');
+    popup?.classList.remove('flex');
+    localStorage.setItem('ai_digest_popup_closed', 'true');
+  });
+
+  // Fechar ao clicar fora
+  popup?.addEventListener('click', (e) => {
+    if (e.target === popup) {
+      popup.classList.add('hidden');
+      popup.classList.remove('flex');
+      localStorage.setItem('ai_digest_popup_closed', 'true');
     }
   });
 </script>
