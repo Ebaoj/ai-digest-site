@@ -131,10 +131,14 @@ const latestArticles = (await getCollection('articles'))
           'Content-Type': 'application/json',
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2aHRwYm9lam5ka3Rxb3hibmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMzYyMDMsImV4cCI6MjA3ODgxMjIwM30.M6PxISn2BjdJRRcsJoRQBVcVL4kjTGuQN53c98BbqSc',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: 'landing_page' }),
       });
 
       if (res.ok) {
+        // Track conversion no Facebook Pixel
+        if (typeof fbq !== 'undefined') {
+          fbq('track', 'Lead', { content_name: 'AI Digest Newsletter' });
+        }
         alert('Inscrição confirmada! Bem-vindo ao AI Digest 🎉');
         (form as HTMLFormElement).reset();
       } else {
